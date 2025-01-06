@@ -1,4 +1,4 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <locale.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,6 +82,16 @@ int compare_CPU(const void* a, const void* b) {
     return strcmp(monoblock1->CPU, monoblock2->CPU);
 }
 
+int compare_fabricator_and_OS(const void* a, const void* b) {
+    const monoblock_t* monoblock1 = (const monoblock_t*)a;
+    const monoblock_t* monoblock2 = (const monoblock_t*)b;
+    int fabricator_cmp = strcmp(monoblock1->fabricator, monoblock2->fabricator);
+    if (fabricator_cmp == 0) {
+        return strcmp(monoblock1->CPU, monoblock2->CPU);
+    }
+    return fabricator_cmp;
+}
+
 monoblock_t* sort_monoblocks(monoblock_t* monoblocks, int size, int criteria) {
     if (criteria == 1) {
         qsort(monoblocks, size, sizeof(monoblock_t), compare_fabricator);
@@ -90,11 +100,10 @@ monoblock_t* sort_monoblocks(monoblock_t* monoblocks, int size, int criteria) {
         qsort(monoblocks, size, sizeof(monoblock_t), compare_CPU);
     }
     else if (criteria == 3) {
-        qsort(monoblocks, size, sizeof(monoblock_t), compare_fabricator);
-        qsort(monoblocks, size, sizeof(monoblock_t), compare_CPU);
+        qsort(monoblocks, size, sizeof(monoblock_t), compare_fabricator_and_OS);
     }
     else {
-        printf("Ошибка: Неверный критерий сортировки\n");
+        printf("Ошибка: неверный критерий сортировки\n");
     }
     return monoblocks;
 }
@@ -102,7 +111,7 @@ monoblock_t* sort_monoblocks(monoblock_t* monoblocks, int size, int criteria) {
 char* WriteFile(monoblock_t* monoblocks, int size) {
     FILE* fp = fopen("kursproject.txt", "w");
     if (fp == NULL) {
-        return "Ошибка при открытии файла для записи";
+        return "Ошибка открытия файла для записи";
     }
 
     for (int i = 0; i < size; i++) {
@@ -112,7 +121,7 @@ char* WriteFile(monoblock_t* monoblocks, int size) {
             fprintf(fp, "Модель процессора: %s\n", monoblocks[i].CPU) < 0 ||
             fprintf(fp, "Диагональ экрана(в дюймах): %f\n\n", monoblocks[i].screenDiagonal) < 0) {
             fclose(fp);
-            return "Ошибка при записи данных в файл";
+            return "Ошибка записи данных в файл";
         }
     }
 
@@ -191,6 +200,7 @@ monoblock_t* DeleteNotes(monoblock_t* monoblocks, int num, int SIZE)
     return monoblocks;
 }
 
+
 void main() {
     setlocale(LC_ALL, "Rus");
     int SIZE = 0;
@@ -207,12 +217,12 @@ void main() {
     while (a) {
         ReadFile(monoblocks, SIZE);
         printf("**********************************************\n");
-        printf("*                     Menu                   *\n");
+        printf("*                     Меню                   *\n");
         printf("**********************************************\n");
         printf("* 1. Создать запись файла.                   *\n");
         printf("* 2. Выполнить поиск по файлу.               *\n");
         printf("* 3. Запись и чтение файла.                  *\n");
-        printf("* 4. Сортировка данных файлов.               *\n");
+        printf("* 4. Сортировка данных файла.                *\n");
         printf("* 5. Завершить работу.                       *\n");
         printf("**********************************************\n");
         scanf("%d", &num);
@@ -241,7 +251,7 @@ void main() {
             printf("**********************************************\n");
             printf("* 1. Операционная система.                   *\n");
             printf("* 2. Оперативная память.                     *\n");
-            printf("* 3. Процессор и операционная память.        *\n");
+            printf("* 3. Процессор и оперативная память.         *\n");
             printf("* 4. Вернуться в меню.                       *\n");
             printf("**********************************************\n");
             scanf("%d", &num);
@@ -254,7 +264,7 @@ void main() {
                 searchRAM = -1;
                 break;
             case 2:
-                printf("Введите объем операционной системы: ");
+                printf("Введите объем операционной памяти: ");
                 scanf("%d", &searchRAM);
                 searchOS[0] = '\0';
                 break;
@@ -263,7 +273,7 @@ void main() {
                 printf("Введите название операционной системы: ");
                 fgets(searchOS, sizeof(searchOS), stdin);
                 searchOS[strcspn(searchOS, "\n")] = 0;
-                printf("Введите объем операционной системы: ");
+                printf("Введите объем операционной памяти: ");
                 scanf("%d", &searchRAM);
                 break;
             case 4:
@@ -274,14 +284,15 @@ void main() {
                 if (countOfSeeked[i] != -1) print_monoblock(monoblocks[i]);
             }
             break;
+
         case 3:
             num = 0;
             printf("**********************************************\n");
             printf("*             Запись и чтение файла          *\n");
             printf("**********************************************\n");
             printf("* 1. Добавить запись.                        *\n");
-            printf("* 2. Изменить записи.                        *\n");
-            printf("* 3. Удалить записи.                         *\n");
+            printf("* 2. Изменить запись.                        *\n");
+            printf("* 3. Удалить запись.                         *\n");
             printf("* 4. Чтение файла.                           *\n");
             printf("* 5. Вернуться в меню.                       *\n");
             printf("**********************************************\n");
@@ -293,7 +304,7 @@ void main() {
                     printf("Ошибка: %s\n", error);
                     break;
                 }
-                printf("Введите количество записей для добавления: ");
+                printf("Введите количество записей, которое хотите добавить: ");
                 num = 0;
                 scanf("%d", &num);
                 SIZE += num;
@@ -319,7 +330,7 @@ void main() {
                     printf("Ошибка: %s\n", error);
                 }
                 else {
-                    printf("Запись добавлена и файл обновлен¸í\n");
+                    printf("Запись добавлена и файл обновлен\n");
                 }
                 break;
             case 2:
@@ -337,7 +348,7 @@ void main() {
                     printf("Ошибка: %s\n", error);
                 }
                 else {
-                    printf("Запись обновлена и файл обновлен¸í\n");
+                    printf("Запись обновлена и файл обновлен\n");
                 }
                 break;
             case 3:
@@ -356,7 +367,7 @@ void main() {
                     printf("Ошибка: %s\n", error);
                 }
                 else {
-                    printf("Запись удалена и файл обновлен¸í\n");
+                    printf("Запись удалена и файл обновлен\n");
                 }
                 break;
             case 4:
@@ -373,6 +384,8 @@ void main() {
                 break;
             case 5:
                 break;
+            default:
+                printf("Неверный выбор. Попробуйте еще раз.\n");
             }
             break;
         case 4:
@@ -391,17 +404,22 @@ void main() {
             case 1:
                 sort_monoblocks(monoblocks, SIZE, num);
                 WriteFile(monoblocks, SIZE);
+                printf("Файл отсортирован по производителю\n");
                 break;
             case 2:
                 sort_monoblocks(monoblocks, SIZE, num);
                 WriteFile(monoblocks, SIZE);
+                printf("Файл отсортирован по ппроцессору\n");
                 break;
             case 3:
                 sort_monoblocks(monoblocks, SIZE, num);
                 WriteFile(monoblocks, SIZE);
+                printf("Файл отсортирован по производителю и процессору\n");
                 break;
             case 4:
                 break;
+            default:
+                printf("Неверный выбор. Попробуйте еще раз\n");
             }
 
             break;
@@ -409,7 +427,7 @@ void main() {
             a = 0;
             break;
         default:
-            printf("Неверный выбор. Попробуйте еще раз.\n");
+            printf("Неверный выбор. Попробуйте еще раз\n");
         }
     }
     free(monoblocks);
